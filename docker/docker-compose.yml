@@ -1,0 +1,151 @@
+---
+# Docker-Compose file to run 
+# - a Kafka cluster with 3 Kafka brokers and 1 Zookeeper node 
+# - a Schema Registry instance 
+# - a Kafka Connect instance, including Debezium CDC connector
+# - a MySQL instance
+#
+# Usage:
+# - export HOST_IP env variable to the external IP of the machine (NOT to localhost)
+# - docker-compose up -d
+#
+# Kafka brokers are accessible from the host machine on:
+#   kafka-1: localhost:19092
+#   kafka-2: localhost:29092
+#   kafka-3: localhost:39092
+#
+# Zookeper node is accessible from the host machine on:
+#   zk1: localhost:22181
+# 
+# Schema-Registry is accessible from the host machine on:
+#   schema-registry: http://localhost:18081
+#
+# Kafka Connect on http://localhost:18083
+#
+# MySQL exposed on localhost:33306 (root pwd: "my-password")
+
+version: '2'
+services:
+  zk1:
+    image: confluentinc/cp-zookeeper:5.1.0
+    ports:
+      - "22181:22181"
+      - "9999:9999"
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 22181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_SERVERS: zk1:22888:23888
+      KAFKA_JMX_HOSTNAME: ${HOST_IP}
+      KAFKA_JMX_PORT: 9999
+
+  kafka-1:
+    image: confluentinc/cp-kafka:5.1.0
+    ports:
+      - "19092:19092"
+      - "19999:19999"
+    depends_on:
+      - zk1
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: ${HOST_IP}:22181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${HOST_IP}:19092
+      KAFKA_JMX_HOSTNAME: ${HOST_IP}
+      KAFKA_JMX_PORT: 19999
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true" # Debezium doesn't explicitly create topics
+      KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE: "false"
+
+  kafka-2:
+    image: confluentinc/cp-kafka:5.1.0
+    ports:
+      - "29092:29092"
+      - "29999:29999"
+    depends_on:
+      - zk1
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: ${HOST_IP}:22181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${HOST_IP}:29092
+      KAFKA_JMX_HOSTNAME: ${HOST_IP}
+      KAFKA_JMX_PORT: 29999
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE: "false"
+
+  kafka-3:
+    image: confluentinc/cp-kafka:5.1.0
+    ports:
+      - "39092:39092"
+      - "39999:39999"
+    depends_on:
+      - zk1
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: ${HOST_IP}:22181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${HOST_IP}:39092
+      KAFKA_JMX_HOSTNAME: ${HOST_IP}
+      KAFKA_JMX_PORT: 39999
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE: "false"
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:5.1.0
+    ports:
+      - "18081:18081"
+    depends_on:
+      - zk1
+      - kafka-1
+      - kafka-2
+      - kafka-3
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: ${HOST_IP}:22181
+      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:18081
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+
+
+  db:
+    image: example-db
+    build:
+      context: ./example-db
+    ports:
+      - "33306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "my-password"
+
+
+
+  kafka-connect:
+    image: kconnect
+    build:
+      context: ./kconnect
+    ports:
+      - "18083:18083"
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: ${HOST_IP}:19092
+      CONNECT_REST_PORT: 18083
+      CONNECT_GROUP_ID: compose-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: docker-connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: docker-connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: docker-connect-status
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://${HOST_IP}:18081
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://${HOST_IP}:18081
+      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_REST_ADVERTISED_HOST_NAME: "kconnect"
+      CONNECT_LOG4J_ROOT_LOGLEVEL: "INFO"
+      CONNECT_LOG4J_LOGGERS: "org.apache.kafka.connect.runtime.rest=WARN,org.reflections=ERROR"
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_PLUGIN_PATH: "/usr/share/java,/etc/kafka-connect/jars"
+    depends_on:
+      - zk1
+      - kafka-1
+      - kafka-2
+      - kafka-3
+      - schema-registry
+    

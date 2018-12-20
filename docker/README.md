@@ -40,7 +40,7 @@ By definition, there is no final indicator telling when a Kafka cluster is "heal
 You may only wait for Kafka nodes to be "started".
 
 ```
-$ ./wait-brokers.sh
+$ ./wait_brokers_up.sh
 ```
 
 ## Stopping the cluster
@@ -58,22 +58,18 @@ You may access all nodes using `localhost`.
 Beware nodes are also exposed to the external interface of your machine.
 
 Kafka brokers are accessible from the host machine on:
-* kafka-1: localhost:19092
-* kafka-2: localhost:29092
-* kafka-3: localhost:39092
-
-The single Zookeper node is accessible from the host machine on:
-* zk1: localhost:22181
+* `kafka-1`: localhost:19092 (PLAINTEXT)
+* `kafka-2`: localhost:29092
+* `kafka-3`: localhost:39092
 
 Schema-Registry is accessible from the host machine on:
-* schema-registry: http://localhost:18081
+* `schema-registry`: http://localhost:18081
 
+Zookeper node is accessible from the host machine on:
+* `zk1`: localhost:22181
 
-## Versions
+Kafka Connect 
+* `kafka-connect`: http://localhost:18083
 
-The cluster uses Confluent Platform OSS version 4.1.2, by default.
-It may be changed editing `./env`.
-
-Conflent Platform 4.1.2 includes Kafka 1.1.1-cp1
-
-
+MySQL 
+* `db`: localhost:33306 (`root`/`my-password` or `mysqluser`/`secret`)

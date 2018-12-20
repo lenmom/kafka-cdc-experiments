@@ -14,8 +14,7 @@ This includes all is required locally with Docker Compose, including:
 
 This works on OSX only!
 
-TBD
-
+[To run the cluster...](./docker/README.md)
 
 ## Useful snippets
 

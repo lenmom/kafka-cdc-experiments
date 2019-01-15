@@ -14,6 +14,12 @@ This includes all is required locally with Docker Compose, including:
 
 [To run the cluster...](./docker/README.md)
 
+Note that, due to the way Docker network is working, each broker is listening on two listeners, internally and externally of the docker network, and they have to use different ports:
+1. LISTENER_DOCKER_INTERNAL://kafka1:19092
+2. LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9092
+
+Everything living inside the docker compose network, like the Kafka Connect instance, should use the internal port (19092...), while to connect to the cluster from an external application you must use the external port (9092...)
+
 ## Useful snippets
 
 ### Setting up the Connector
@@ -40,7 +46,7 @@ This includes all is required locally with Docker Compose, including:
 }
 ```
 
-Note that the Kafka Connect is inside the Docker Compose network, so the connector must be configured using the INTERNAL ports for kafka brokers (19092... as opposed to 9092... ) 
+Note that the Kafka Connect nodes is inside the Docker network so you must use the internal broker listener (19092).
 
 To see the configuration and status of Connectors:
 

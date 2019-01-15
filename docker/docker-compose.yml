@@ -23,7 +23,7 @@
 #
 # Kafka Connect on http://localhost:8083
 #
-# MySQL exposed on localhost:33306 (root pwd: "my-password")
+# MySQL exposed on localhost:3306 (root pwd: "my-password")
 
 version: '2.2'
 
@@ -115,7 +115,7 @@ services:
     build:
       context: ./example-db
     ports:
-      - "33306:3306"
+      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: "my-password"
 

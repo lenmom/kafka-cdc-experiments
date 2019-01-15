@@ -40,7 +40,7 @@ This includes all is required locally with Docker Compose, including:
 }
 ```
 
-Note that the Kafka Connect is inside the Docker Compose network, so the connector must be configured using the INTERNAL ports for db (3306, as opposed to 33306) and kafka brokers (19092... as opposed to 9092... ) 
+Note that the Kafka Connect is inside the Docker Compose network, so the connector must be configured using the INTERNAL ports for kafka brokers (19092... as opposed to 9092... ) 
 
 To see the configuration and status of Connectors:
 

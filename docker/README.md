@@ -61,4 +61,4 @@ Kafka Connect
 * `kafka-connect`: http://localhost:8083
 
 MySQL 
-* `db`: localhost:33306 (`root`/`my-password` or `mysqluser`/`secret`)
+* `db`: `localhost:3306` (`root`/`my-password` or `mysqluser`/`secret`)
